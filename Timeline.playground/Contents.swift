@@ -12,6 +12,75 @@ extension NSDate{
 
 let calendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
 
+func dayname(number: Int) -> String {
+    switch number {
+    case 1:
+        return "sunday"
+    case 2:
+        return "monday"
+    case 3:
+        return "tuesday"
+    case 4:
+        return "wednesday"
+    case 5:
+        return "thursday"
+    case 6:
+        return "friday"
+    case 7:
+        return "saturday"
+    default:
+        return "error"
+    }
+}
+
+
+func addTime(yearAdded: Int, monthAdded: Int, weekAdded:Int, dayAdded: Int, fromDate: NSDate) -> NSDate {
+    
+    var newDate = calendar.dateByAddingUnit(NSCalendarUnit.Year, value: yearAdded, toDate: fromDate, options: NSCalendarOptions.init(rawValue: 0))!
+    newDate = calendar.dateByAddingUnit(NSCalendarUnit.Month, value: monthAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
+    newDate = calendar.dateByAddingUnit(NSCalendarUnit.Day, value: 7 * weekAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
+    newDate = calendar.dateByAddingUnit(NSCalendarUnit.Day, value: dayAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
+    
+    return newDate
+    
+}
+
+
+
+func dayOfWhichWeek(date: NSDate) -> Int {
+    
+    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year,NSCalendarUnit.Weekday], fromDate: date)
+    
+    var month = components.month
+    var integer = 1
+    
+    while (month == components.month){
+        let newDate = addTime(0, monthAdded: 0, weekAdded: -1 * integer, dayAdded: 0, fromDate: date)
+        let newDateComponents = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: newDate)
+        month = newDateComponents.month
+        integer += 1
+    }
+    
+    return integer - 1
+}
+
+
+
+
+
+func isweekly(selected: NSDate, series:NSDate) -> Bool {
+    
+    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: series, toDate: selected, options: NSCalendarOptions.init(rawValue: 0))
+    return (diffDateComponents.day % 7 == 0)
+    
+}
+
+func isbiweekly(selected: NSDate, series:NSDate) -> Bool {
+    
+    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day], fromDate: series, toDate: selected, options: NSCalendarOptions.init(rawValue: 0))
+    return (diffDateComponents.day % 14 == 0)
+    
+}
 
 
 let serial_start_date: String = "2016-04-01"
@@ -19,41 +88,40 @@ let serial_start_date: String = "2016-04-01"
 let serialStart = NSDate(dateString: serial_start_date + " 00:00")
 
 
-let monthToAdd = 0
-let daysToAdd = 5 * 7
+
+let eventDate = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, fromDate: serialStart)
 
 
 
 
-var eventDate = calendar.dateByAddingUnit(NSCalendarUnit.Month, value: monthToAdd, toDate: serialStart, options: NSCalendarOptions.init(rawValue: 0))!
-eventDate = calendar.dateByAddingUnit(NSCalendarUnit.Day, value: daysToAdd, toDate: eventDate, options: NSCalendarOptions.init(rawValue: 0))!
+
+//
+//
+let selectedDate = NSDate(dateString: "2016-04-08 00:00")
+
+
+dayOfWhichWeek(selectedDate)
 
 
 
+let eventStartComponents = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Weekday, NSCalendarUnit.WeekOfMonth], fromDate: selectedDate)
 
-let eventStartComponents = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.WeekOfMonth, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Weekday], fromDate: eventDate)
+
 
 eventStartComponents.day
 eventStartComponents.month
 eventStartComponents.year
-//
-//
-let selectedDate = NSDate(dateString: "2016-04-15 00:00")
+dayname(eventStartComponents.weekday)
+eventStartComponents.weekOfMonth
 
 
 
 
 
-func isweekly(selected: NSDate, series:NSDate) -> Bool {
-
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: series, toDate: selected, options: NSCalendarOptions.init(rawValue: 0))
-
-    return (diffDateComponents.day % 7 == 0)
-}
 
 
 isweekly(selectedDate, series: serialStart)
-
+isbiweekly(selectedDate, series: serialStart)
 
 
 
