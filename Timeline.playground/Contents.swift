@@ -5,9 +5,6 @@ let calendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
 
 
 func stringToDate(dateString: String) -> NSDate {
-    
-    //    2016-05-01 00:00
-    
     let dateFormatter = NSDateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
     return dateFormatter.dateFromString(dateString)!
@@ -16,27 +13,11 @@ func stringToDate(dateString: String) -> NSDate {
 
 func dateToString(date: NSDate) -> String {
     
-    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year], fromDate: date)
+    let dateFormatter = NSDateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    dateFormatter.locale = NSLocale.currentLocale()
     
-    var month = ""
-    
-    var day = ""
-    
-    if (components.month < 10) {
-        month = "0" + String(components.month)
-    } else {
-        month = String(components.month)
-    }
-    
-    if (components.day < 10) {
-        day = "0" + String(components.day)
-    } else {
-        day = String(components.day)
-    }
-    
-    
-    return String(components.year) + "-" + month + "-" + day
-    
+    return dateFormatter.stringFromDate(date)
 }
 
 
@@ -133,7 +114,16 @@ func changeTimeOfDay(date: NSDate, newTime: String) -> NSDate {
     
     let newDateTimeString = dateToString(date) + " " + newTime
     return stringToDate(newDateTimeString)
-     
+    
+}
+
+
+func dateToStringHour(date: NSDate) -> String {
+    let dateFormatter = NSDateFormatter()
+    dateFormatter.locale = NSLocale.currentLocale()
+    dateFormatter.dateFormat = "HH:mm"
+    
+    return dateFormatter.stringFromDate(date)
 }
 
 
@@ -149,6 +139,8 @@ let seriesStartString = dateToString(seriesStart)
 var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart)
 
 eventDateStart = changeTimeOfDay(eventDateStart, newTime: "19:30")
+
+dateToStringHour(eventDateStart)
 
 let duration = 90
 
