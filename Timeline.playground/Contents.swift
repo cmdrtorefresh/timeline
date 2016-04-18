@@ -47,15 +47,24 @@ func addTime(yearAdded: Int, monthAdded: Int, weekAdded:Int, dayAdded: Int, from
 
 
 
-func dayOfWhichWeek(date: NSDate) -> Int {
+func dayOfWhichWeekOfMonth(dateString: String, fromMonthStart: Bool) -> Int {
+    
+    let date = NSDate(dateString: dateString + " 00:00")
     
     let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year,NSCalendarUnit.Weekday], fromDate: date)
     
     var month = components.month
+    
+    var multiplier = -1
+    
+    if (!fromMonthStart){
+        multiplier = 1
+    }
+    
     var integer = 1
     
     while (month == components.month){
-        let newDate = addTime(0, monthAdded: 0, weekAdded: -1 * integer, dayAdded: 0, fromDate: date)
+        let newDate = addTime(0, monthAdded: 0, weekAdded: multiplier * integer, dayAdded: 0, fromDate: date)
         let newDateComponents = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: newDate)
         month = newDateComponents.month
         integer += 1
@@ -65,19 +74,21 @@ func dayOfWhichWeek(date: NSDate) -> Int {
 }
 
 
-
-
-
-func isweekly(selected: NSDate, series:NSDate) -> Bool {
+func isweekly(selected: String, series:String) -> Bool {
+    let selectedDate = NSDate(dateString: selected + " 00:00")
+    let seriesDate = NSDate(dateString: series + " 00:00")
     
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: series, toDate: selected, options: NSCalendarOptions.init(rawValue: 0))
+    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
     return (diffDateComponents.day % 7 == 0)
     
 }
 
-func isbiweekly(selected: NSDate, series:NSDate) -> Bool {
+
+func isbiweekly(selected: String, series:String) -> Bool {
+    let selectedDate = NSDate(dateString: selected + " 00:00")
+    let seriesDate = NSDate(dateString: series + " 00:00")
     
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day], fromDate: series, toDate: selected, options: NSCalendarOptions.init(rawValue: 0))
+    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
     return (diffDateComponents.day % 14 == 0)
     
 }
@@ -94,25 +105,7 @@ let eventDate = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, fromDate: s
 
 
 
-
-//
-//
-let selectedDate = NSDate(dateString: "2016-04-08 00:00")
-
-
-dayOfWhichWeek(selectedDate)
-
-
-
-let eventStartComponents = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Weekday, NSCalendarUnit.WeekOfMonth], fromDate: selectedDate)
-
-
-
-eventStartComponents.day
-eventStartComponents.month
-eventStartComponents.year
-dayname(eventStartComponents.weekday)
-eventStartComponents.weekOfMonth
+dayOfWhichWeekOfMonth("2016-04-23", fromMonthStart: false)
 
 
 
@@ -120,8 +113,10 @@ eventStartComponents.weekOfMonth
 
 
 
-isweekly(selectedDate, series: serialStart)
-isbiweekly(selectedDate, series: serialStart)
+
+
+isweekly("2016-04-16", series: "2016-04-02")
+isbiweekly("2016-04-23", series: "2016-04-02")
 
 
 
