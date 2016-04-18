@@ -12,7 +12,41 @@ extension NSDate{
 
 let calendar = NSCalendar(calendarIdentifier: NSCalendarIdentifierGregorian)!
 
-func dayname(number: Int) -> String {
+
+func dateToString(date: NSDate) -> String {
+    
+    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year], fromDate: date)
+    
+    var month = ""
+    
+    var day = ""
+    
+    if (components.month < 10) {
+        month = "0" + String(components.month)
+    } else {
+        month = String(components.month)
+    }
+    
+    if (components.day < 10) {
+        day = "0" + String(components.day)
+    } else {
+        day = String(components.day)
+    }
+    
+    
+    return String(components.year) + "-" + month + "-" + day
+    
+}
+
+
+func dayname(dateString: String) -> String {
+    
+    let date = NSDate(dateString: dateString + " 00:00")
+    
+    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year,NSCalendarUnit.Weekday], fromDate: date)
+    
+    let number = components.weekday
+    
     switch number {
     case 1:
         return "sunday"
@@ -44,7 +78,6 @@ func addTime(yearAdded: Int, monthAdded: Int, weekAdded:Int, dayAdded: Int, from
     return newDate
     
 }
-
 
 
 func dayOfWhichWeekOfMonth(dateString: String, fromMonthStart: Bool) -> Int {
@@ -94,52 +127,41 @@ func isbiweekly(selected: String, series:String) -> Bool {
 }
 
 
-let serial_start_date: String = "2016-04-01"
+func changeTimeOfDay(date: NSDate, newTime: String) -> NSDate {
+    
+    let newDateTimeString = dateToString(date) + " " + newTime
+    
+    let newDate = NSDate(dateString: newDateTimeString)
+    
+    return newDate
+}
 
-let serialStart = NSDate(dateString: serial_start_date + " 00:00")
 
 
+// Example of Usage of all functions above
 
-let eventDate = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, fromDate: serialStart)
+let series_start_date: String = "2016-04-01"
 
+let seriesStart = NSDate(dateString: series_start_date + " 00:00")
 
+let seriesStartString = dateToString(seriesStart)
 
+var eventDate = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, fromDate: seriesStart)
+
+eventDate = changeTimeOfDay(eventDate, newTime: "19:30")
+
+dayname(series_start_date)
 
 dayOfWhichWeekOfMonth("2016-04-23", fromMonthStart: false)
 
-
-
-
-
-
-
-
-
 isweekly("2016-04-16", series: "2016-04-02")
+
 isbiweekly("2016-04-23", series: "2016-04-02")
 
 
 
 //
 //let anotherdate = calendar.dateFromComponents(startingComponents)
-
-
-
-
-//var yearfirst = Int(String(start_date[start_date.startIndex.advancedBy(0)]))!
-//var yearsecond = Int(String(start_date[start_date.startIndex.advancedBy(1)]))!
-//var yearthird = Int(String(start_date[start_date.startIndex.advancedBy(2)]))!
-//var yearfourth = Int(String(start_date[start_date.startIndex.advancedBy(3)]))!
-//
-//var monthfirst = Int(String(start_date[start_date.startIndex.advancedBy(5)]))!
-//var monthsecond = Int(String(start_date[start_date.startIndex.advancedBy(6)]))!
-//
-//var dayfirst = Int(String(start_date[start_date.startIndex.advancedBy(8)]))!
-//var daysecond = Int(String(start_date[start_date.startIndex.advancedBy(9)]))!
-//
-//var year = yearfirst*1000 + yearsecond*100 + yearthird*10 + yearfourth
-//var month = monthfirst*10 + monthsecond
-//var day = dayfirst*10 + daysecond
 
 
 
