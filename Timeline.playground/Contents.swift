@@ -68,12 +68,13 @@ func dayname(dateString: String) -> String {
 }
 
 
-func addTime(yearAdded: Int, monthAdded: Int, weekAdded:Int, dayAdded: Int, fromDate: NSDate) -> NSDate {
+func addTime(yearAdded: Int, monthAdded: Int, weekAdded:Int, dayAdded: Int, minuteAdded: Int, fromDate: NSDate) -> NSDate {
     
     var newDate = calendar.dateByAddingUnit(NSCalendarUnit.Year, value: yearAdded, toDate: fromDate, options: NSCalendarOptions.init(rawValue: 0))!
     newDate = calendar.dateByAddingUnit(NSCalendarUnit.Month, value: monthAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
     newDate = calendar.dateByAddingUnit(NSCalendarUnit.Day, value: 7 * weekAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
     newDate = calendar.dateByAddingUnit(NSCalendarUnit.Day, value: dayAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
+    newDate = calendar.dateByAddingUnit(NSCalendarUnit.Minute, value: minuteAdded, toDate: newDate, options: NSCalendarOptions.init(rawValue: 0))!
     
     return newDate
     
@@ -97,7 +98,7 @@ func dayOfWhichWeekOfMonth(dateString: String, fromMonthStart: Bool) -> Int {
     var integer = 1
     
     while (month == components.month){
-        let newDate = addTime(0, monthAdded: 0, weekAdded: multiplier * integer, dayAdded: 0, fromDate: date)
+        let newDate = addTime(0, monthAdded: 0, weekAdded: multiplier * integer, dayAdded: 0, minuteAdded: 0, fromDate: date)
         let newDateComponents = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: newDate)
         month = newDateComponents.month
         integer += 1
@@ -146,9 +147,13 @@ let seriesStart = NSDate(dateString: series_start_date + " 00:00")
 
 let seriesStartString = dateToString(seriesStart)
 
-var eventDate = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, fromDate: seriesStart)
+var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart)
 
-eventDate = changeTimeOfDay(eventDate, newTime: "19:30")
+eventDateStart = changeTimeOfDay(eventDateStart, newTime: "19:30")
+
+let duration = 90
+
+let eventDateEnd = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
 
 dayname(series_start_date)
 
