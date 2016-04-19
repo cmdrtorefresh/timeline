@@ -316,12 +316,48 @@ func weekToInteger(week: String) -> Int {
     }
 }
 
-func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String){
+
+func parseFrequencyValue(frequencyValue: String) -> [String] {
+    var i = 1
+    let length = frequencyValue.characters.count
+
+    var valueArray = [String]()
+    
+    var word = ""
+    
+    while (i < length) {
+        
+        let index = frequencyValue.startIndex.advancedBy(i)
+        let character = String(frequencyValue[index]).lowercaseString
+        
+        if (character == "]"){
+            valueArray.append(word)
+            word = ""
+        } else if (character != ",") {
+            word += character
+        } else {
+            valueArray.append(word)
+            word = ""
+        }
+        
+        i += 1
+    }
+    
+    return valueArray
+    
+}
+
+
+
+func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String, frequencyValue: String){
+    
     switch frequency.lowercaseString{
     case "weekly":
         isWeekly(selected, series: seriesStartDate)
     case "biweekly":
         isBiweekly(selected, series: seriesStartDate)
+//    case "weeklyon":
+//        isWeeklyOn(<#T##dayname: String##String#>, selected: selected)
     
         
     default:
