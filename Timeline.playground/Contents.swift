@@ -15,13 +15,12 @@ func dateToString(date: NSDate) -> String {
     
     let dateFormatter = NSDateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd"
-    dateFormatter.locale = NSLocale.currentLocale()
     
     return dateFormatter.stringFromDate(date)
 }
 
 
-func dayname(dateString: String) -> String {
+func dateStringToDayname(dateString: String) -> String {
     
     let date = stringToDate(dateString + " 00:00")
     
@@ -89,27 +88,6 @@ func dayOfWhichWeekOfMonth(dateString: String, fromMonthStart: Bool) -> Int {
     return integer - 1
 }
 
-
-func isweekly(selected: String, series:String) -> Bool {
-    let selectedDate = stringToDate(selected + " 00:00")
-    let seriesDate = stringToDate(series + " 00:00")
-    
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
-    return (diffDateComponents.day % 7 == 0)
-    
-}
-
-
-func isbiweekly(selected: String, series:String) -> Bool {
-    let selectedDate = stringToDate(selected + " 00:00")
-    let seriesDate = stringToDate(series + " 00:00")
-    
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
-    return (diffDateComponents.day % 14 == 0)
-    
-}
-
-
 func changeTimeOfDay(date: NSDate, newTime: String) -> NSDate {
     
     let newDateTimeString = dateToString(date) + " " + newTime
@@ -127,6 +105,159 @@ func dateToStringHour(date: NSDate) -> String {
 }
 
 
+//
+
+
+func isWeeklyOn(dayname: String, selected: String) -> Bool {
+    return (dateStringToDayname(selected) == dayname)
+}
+
+func isMonthlyOn(weekOrderSpaceDayName: String, selected: String) -> Bool {
+    
+    var i = 0
+    let length = weekOrderSpaceDayName.characters.count
+    var weekString = ""
+    var daynameBool = false
+    var dayname = ""
+    
+    while (i < length) {
+        let index = weekOrderSpaceDayName.startIndex.advancedBy(i)
+        if (String(weekOrderSpaceDayName[index]) == " "){
+            daynameBool = true
+        } else if (!daynameBool){
+            weekString += String(weekOrderSpaceDayName[index]).lowercaseString
+        } else {
+            dayname += String(weekOrderSpaceDayName[index]).lowercaseString
+        }
+        
+        i += 1
+    }
+    
+    let dayCheck = (dayname == dateStringToDayname(selected))
+    
+    var weekCheck = false
+    
+    if (weekToInteger(weekString) < 0){
+        weekCheck = (1 == dayOfWhichWeekOfMonth(selected, fromMonthStart: false))
+    } else {
+        weekCheck = (weekToInteger(weekString) == dayOfWhichWeekOfMonth(selected, fromMonthStart: true))
+    }
+    
+    return dayCheck && weekCheck
+    
+}
+
+
+
+
+func isWeekly(selected: String, series:String) -> Bool {
+    let selectedDate = stringToDate(selected + " 00:00")
+    let seriesDate = stringToDate(series + " 00:00")
+    
+    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
+    return (diffDateComponents.day % 7 == 0)
+    
+}
+
+
+func isBiweekly(selected: String, series:String) -> Bool {
+    let selectedDate = stringToDate(selected + " 00:00")
+    let seriesDate = stringToDate(series + " 00:00")
+    
+    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
+    return (diffDateComponents.day % 14 == 0)
+    
+}
+
+
+func daynameToInteger(dayname: String) -> Int {
+    
+    switch dayname.lowercaseString {
+    case "sunday":
+        return 1
+    case "monday":
+        return 2
+    case "tuesday":
+        return 2
+    case "wednesday":
+        return 4
+    case "thursday":
+        return 5
+    case "friday":
+        return 6
+    case "saturday":
+        return 7
+    default:
+        return 8
+     }
+}
+
+
+func monthToInteger(month: String) -> Int {
+    
+    switch month.lowercaseString {
+    case "january":
+        return 1
+    case "february":
+        return 2
+    case "march":
+        return 3
+    case "april":
+        return 4
+    case "may":
+        return 5
+    case "june":
+        return 6
+    case "july":
+        return 7
+    case "august":
+        return 8
+    case "september":
+        return 9
+    case "october":
+        return 10
+    case "november":
+        return 11
+    case "december":
+        return 12
+    default:
+        return 13
+    }
+    
+}
+
+func weekToInteger(week: String) -> Int {
+    switch week.lowercaseString {
+    case "first":
+        return 1
+    case "second":
+        return 2
+    case "third":
+        return 3
+    case "fourth":
+        return 4
+    case "fifth":
+        return 5
+    case "last":
+        return -1
+    default:
+        return 6
+    }
+}
+
+func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String){
+    switch frequency.lowercaseString{
+    case "weekly":
+        isWeekly(selected, series: seriesStartDate)
+    case "biweekly":
+        isBiweekly(selected, series: seriesStartDate)
+    
+        
+    default:
+       print ("Hello")
+    }
+}
+
 
 // Example of Usage of all functions above
 
@@ -134,7 +265,7 @@ let series_start_date: String = "2016-04-01"
 
 let seriesStart = stringToDate(series_start_date + " 00:00")
 
-let seriesStartString = dateToString(seriesStart)
+dateToString(seriesStart)
 
 var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart)
 
@@ -144,12 +275,20 @@ dateToStringHour(eventDateStart)
 
 let duration = 90
 
-let eventDateEnd = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
+addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
 
-dayname(series_start_date)
+dateStringToDayname(series_start_date)
 
 dayOfWhichWeekOfMonth("2016-04-23", fromMonthStart: false)
 
-isweekly("2016-04-16", series: "2016-04-02")
+isWeekly("2016-04-16", series: "2016-04-02")
 
-isbiweekly("2016-04-23", series: "2016-04-02")
+isBiweekly("2016-04-23", series: "2016-04-02")
+
+daynameToInteger("thursday")
+
+monthToInteger("october")
+
+weekToInteger("Second")
+
+isMonthlyOn("first monday", selected: "2016-04-18")
