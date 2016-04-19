@@ -158,6 +158,9 @@ func isMonthlyOn(weekOrderSpaceDayName: String, selected: String) -> Bool {
 }
 
 
+
+
+
 func isAnnualOn(weekOrderSpaceDaynameInMonth: String, selected: String) -> Bool {
     
     var i = 0
@@ -328,6 +331,7 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
     while (i < length) {
         
         let index = frequencyValueString.startIndex.advancedBy(i)
+        let nextIndex = frequencyValueString.startIndex.advancedBy(i+1)
         let character = String(frequencyValueString[index]).lowercaseString
         
         if (character == "]"){
@@ -338,6 +342,9 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
         } else {
             valueArray.append(word)
             word = ""
+            if (String(frequencyValueString[nextIndex]).lowercaseString == " "){
+                i += 1
+            }
         }
         
         i += 1
@@ -346,6 +353,7 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
     return valueArray
     
 }
+
 
 
 
@@ -375,7 +383,7 @@ func frequencyClassifier(selected: String, seriesStartDate: String, frequency: S
     case "monthly":
         for item in frequencyValue {
             let test = isMonthlyOn(item, selected: selected)
-            if (test) {
+            if (test){
                 evaluation = true
                 break
             }
@@ -390,14 +398,22 @@ func frequencyClassifier(selected: String, seriesStartDate: String, frequency: S
         }
     case "semiannual":
         for item in frequencyValue {
-            isAnnualOn(item, selected: selected)
+            let test = isAnnualOn(item, selected: selected)
+            if (test) {
+                evaluation = true
+                break
+            }
         }
     case "quarterly":
         for item in frequencyValue {
-            isAnnualOn(item, selected: selected)
+            let test = isAnnualOn(item, selected: selected)
+            if (test) {
+                evaluation = true
+                break
+            }
         }
     default:
-       print ("Hello")
+       print ("error")
     }
     
     return evaluation
@@ -442,5 +458,8 @@ isAnnualOn("last Friday in December", selected: "2016-11-25")
 
 let a = "[monday,wednesday]"
 let b = "[first saturday, second saturday, third saturday]"
+let c = "[last friday in december, first friday in june]"
 
-frequencyClassifier("2016-04-02", seriesStartDate: "2016-04-04", frequency: "monthly", frequencyValueString: b)
+frequencyClassifier("2016-06-03", seriesStartDate: "2016-04-06", frequency: "semiannual", frequencyValueString: c)
+
+
