@@ -20,6 +20,14 @@ func dateToString(date: NSDate) -> String {
 }
 
 
+func dateStringToMonth(dateString: String) -> Int {
+    let date = stringToDate(dateString)
+    
+    let components = calendar.components([NSCalendarUnit.Month], fromDate: date)
+    
+    return components.month
+}
+
 func dateStringToDayname(dateString: String) -> String {
     
     let date = stringToDate(dateString + " 00:00")
@@ -137,14 +145,77 @@ func isMonthlyOn(weekOrderSpaceDayName: String, selected: String) -> Bool {
     
     var weekCheck = false
     
-    if (weekToInteger(weekString) < 0){
-        weekCheck = (1 == dayOfWhichWeekOfMonth(selected, fromMonthStart: false))
+    let weekNum = weekToInteger(weekString)
+    
+    if (weekNum < 0){
+        weekCheck = (-1 * weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: false))
     } else {
-        weekCheck = (weekToInteger(weekString) == dayOfWhichWeekOfMonth(selected, fromMonthStart: true))
+        weekCheck = (weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: true))
     }
     
     return dayCheck && weekCheck
     
+}
+
+
+func isAnnualOn(weekOrderSpaceDaynameInMonth: String, selected: String) -> Bool {
+    
+    var i = 0
+    let length = weekOrderSpaceDaynameInMonth.characters.count
+    var weekString = ""
+    var dayname = ""
+    var month = ""
+    var daynameBool = false
+    var monthnameBool = false
+    var spaceCount = 0
+    
+    
+    while (i < length) {
+        
+        let index = weekOrderSpaceDaynameInMonth.startIndex.advancedBy(i)
+        
+        switch spaceCount{
+        case 1:
+            daynameBool = true
+        case 2:
+            daynameBool = false
+            monthnameBool = false
+        case 3:
+            monthnameBool = true
+        default:
+            daynameBool = false
+            monthnameBool = false
+        }
+        
+        if (String(weekOrderSpaceDaynameInMonth[index]) == " "){
+            spaceCount += 1
+        } else if (!daynameBool && !monthnameBool && spaceCount == 0){
+            weekString += String(weekOrderSpaceDaynameInMonth[index]).lowercaseString
+        } else if (daynameBool && !monthnameBool){
+            dayname += String(weekOrderSpaceDaynameInMonth[index]).lowercaseString
+        } else if (!daynameBool && monthnameBool){
+            month += String(weekOrderSpaceDaynameInMonth[index]).lowercaseString
+        }
+        
+        i += 1
+    }
+    
+    let dayCheck = (dayname == dateStringToDayname(selected))
+
+    var weekCheck = false
+    
+    let weekNum = weekToInteger(weekString)
+    
+    if (weekNum < 0){
+        weekCheck = (-1 * weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: false))
+    } else {
+        weekCheck = (weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: true))
+    }
+
+    
+    let monthCheck = (monthToInteger(month) == dateStringToMonth(selected + " 00:00"))
+    
+    return (dayCheck && weekCheck && monthCheck)
 }
 
 
@@ -291,4 +362,6 @@ monthToInteger("october")
 
 weekToInteger("Second")
 
-isMonthlyOn("first monday", selected: "2016-04-18")
+isMonthlyOn("third monday", selected: "2016-04-18")
+
+isAnnualOn("last Friday in December", selected: "2016-11-25")
