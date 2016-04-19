@@ -317,9 +317,9 @@ func weekToInteger(week: String) -> Int {
 }
 
 
-func parseFrequencyValue(frequencyValue: String) -> [String] {
+func parseFrequencyValue(frequencyValueString: String) -> [String] {
     var i = 1
-    let length = frequencyValue.characters.count
+    let length = frequencyValueString.characters.count
 
     var valueArray = [String]()
     
@@ -327,8 +327,8 @@ func parseFrequencyValue(frequencyValue: String) -> [String] {
     
     while (i < length) {
         
-        let index = frequencyValue.startIndex.advancedBy(i)
-        let character = String(frequencyValue[index]).lowercaseString
+        let index = frequencyValueString.startIndex.advancedBy(i)
+        let character = String(frequencyValueString[index]).lowercaseString
         
         if (character == "]"){
             valueArray.append(word)
@@ -349,20 +349,58 @@ func parseFrequencyValue(frequencyValue: String) -> [String] {
 
 
 
-func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String, frequencyValue: String){
+func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
+    
+    var frequencyValue = Array<String>()
+    
+    if (frequencyValueString != "") {
+        frequencyValue = parseFrequencyValue(frequencyValueString)
+    }
+    
+    var evaluation = false
     
     switch frequency.lowercaseString{
     case "weekly":
-        isWeekly(selected, series: seriesStartDate)
+        evaluation = isWeekly(selected, series: seriesStartDate)
     case "biweekly":
-        isBiweekly(selected, series: seriesStartDate)
-//    case "weeklyon":
-//        isWeeklyOn(<#T##dayname: String##String#>, selected: selected)
-    
-        
+        evaluation = isBiweekly(selected, series: seriesStartDate)
+    case "weeklyon":
+        for item in frequencyValue {
+            let test = isWeeklyOn(item, selected: selected)
+            if (test){
+                evaluation = true
+                break
+            }
+        }
+    case "monthly":
+        for item in frequencyValue {
+            let test = isMonthlyOn(item, selected: selected)
+            if (test) {
+                evaluation = true
+                break
+            }
+        }
+    case "annual":
+        for item in frequencyValue {
+            let test = isAnnualOn(item, selected: selected)
+            if (test) {
+                evaluation = true
+                break
+            }
+        }
+    case "semiannual":
+        for item in frequencyValue {
+            isAnnualOn(item, selected: selected)
+        }
+    case "quarterly":
+        for item in frequencyValue {
+            isAnnualOn(item, selected: selected)
+        }
     default:
        print ("Hello")
     }
+    
+    return evaluation
 }
 
 
@@ -401,3 +439,8 @@ weekToInteger("Second")
 isMonthlyOn("third monday", selected: "2016-04-18")
 
 isAnnualOn("last Friday in December", selected: "2016-11-25")
+
+let a = "[monday,wednesday]"
+let b = "[first saturday, second saturday, third saturday]"
+
+frequencyClassifier("2016-04-02", seriesStartDate: "2016-04-04", frequency: "monthly", frequencyValueString: b)
