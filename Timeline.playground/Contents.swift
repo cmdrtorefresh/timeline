@@ -96,6 +96,8 @@ func dayOfWhichWeekOfMonth(dateString: String, fromMonthStart: Bool) -> Int {
     return integer - 1
 }
 
+
+
 func changeTimeOfDay(date: NSDate, newTime: String) -> NSDate {
     
     let newDateTimeString = dateToString(date) + " " + newTime
@@ -113,7 +115,91 @@ func dateToStringHour(date: NSDate) -> String {
 }
 
 
-//
+func isDateEarlier(earlierDate: NSDate, laterDate: NSDate) -> Bool {
+    
+    if earlierDate.compare(laterDate) == NSComparisonResult.OrderedAscending {
+        return true
+    } else {
+        return false
+    }
+}
+
+
+func daynameToInteger(dayname: String) -> Int {
+    
+    switch dayname.lowercaseString {
+    case "sunday":
+        return 1
+    case "monday":
+        return 2
+    case "tuesday":
+        return 2
+    case "wednesday":
+        return 4
+    case "thursday":
+        return 5
+    case "friday":
+        return 6
+    case "saturday":
+        return 7
+    default:
+        return 8
+    }
+}
+
+
+func monthToInteger(month: String) -> Int {
+    
+    switch month.lowercaseString {
+    case "january":
+        return 1
+    case "february":
+        return 2
+    case "march":
+        return 3
+    case "april":
+        return 4
+    case "may":
+        return 5
+    case "june":
+        return 6
+    case "july":
+        return 7
+    case "august":
+        return 8
+    case "september":
+        return 9
+    case "october":
+        return 10
+    case "november":
+        return 11
+    case "december":
+        return 12
+    default:
+        return 13
+    }
+    
+}
+
+func weekToInteger(week: String) -> Int {
+    switch week.lowercaseString {
+    case "first":
+        return 1
+    case "second":
+        return 2
+    case "third":
+        return 3
+    case "fourth":
+        return 4
+    case "fifth":
+        return 5
+    case "last":
+        return -1
+    default:
+        return 6
+    }
+}
+
 
 
 func isWeeklyOn(dayname: String, selected: String) -> Bool {
@@ -222,16 +308,58 @@ func isAnnualOn(weekOrderSpaceDaynameInMonth: String, selected: String) -> Bool 
 }
 
 
-
-
-func isWeekly(selected: String, series:String) -> Bool {
-    let selectedDate = stringToDate(selected + " 00:00")
-    let seriesDate = stringToDate(series + " 00:00")
+func createWeeklyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int) -> [NSDate]{
     
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day, NSCalendarUnit.Hour, NSCalendarUnit.Minute, NSCalendarUnit.Second], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
-    return (diffDateComponents.day % 7 == 0)
+    let seriesEventStartDateTime = stringToDate(seriesStartDateString + " " + eventStartTimeString)
+    
+    var eventStartAfterWindowEnd = false
+    
+    var eventStartTime = seriesEventStartDateTime
+    
+    while !eventStartAfterWindowEnd {
+        eventStartTime = addTime(0, monthAdded: 0, weekAdded: 1, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+        if (isDateEarlier(selectedMaximum, laterDate: eventStartTime)){
+            eventStartAfterWindowEnd = true
+        }
+    }
+ 
+    eventStartTime = addTime(0, monthAdded: 0, weekAdded: -1, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+    let eventEndTime = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: seriesDurationMinute, fromDate: eventStartTime)
+    
+    return [eventStartTime, eventEndTime]
     
 }
+
+func createBiweeklyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int) -> [NSDate]{
+    
+    let seriesEventStartDateTime = stringToDate(seriesStartDateString + " " + eventStartTimeString)
+    
+    var eventStartAfterWindowEnd = false
+    
+    var eventStartTime = seriesEventStartDateTime
+    
+    while !eventStartAfterWindowEnd {
+        eventStartTime = addTime(0, monthAdded: 0, weekAdded: 2, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+        if (isDateEarlier(selectedMaximum, laterDate: eventStartTime)){
+            eventStartAfterWindowEnd = true
+        }
+    }
+    
+    eventStartTime = addTime(0, monthAdded: 0, weekAdded: -2, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+    let eventEndTime = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: seriesDurationMinute, fromDate: eventStartTime)
+    
+    return [eventStartTime, eventEndTime]
+    
+}
+
+
+func isWeekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int) -> Bool {
+    
+    let eventStopTime = createWeeklyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: seriesDurationMinute)[1]
+
+    return isDateEarlier(selectedMinimum, laterDate: eventStopTime)
+}
+
 
 
 func isBiweekly(selected: String, series:String) -> Bool {
@@ -244,80 +372,49 @@ func isBiweekly(selected: String, series:String) -> Bool {
 }
 
 
-func daynameToInteger(dayname: String) -> Int {
-    
-    switch dayname.lowercaseString {
-    case "sunday":
-        return 1
-    case "monday":
-        return 2
-    case "tuesday":
-        return 2
-    case "wednesday":
-        return 4
-    case "thursday":
-        return 5
-    case "friday":
-        return 6
-    case "saturday":
-        return 7
-    default:
-        return 8
-     }
-}
 
 
-func monthToInteger(month: String) -> Int {
+
+func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) -> [NSDate]{
     
-    switch month.lowercaseString {
-    case "january":
-        return 1
-    case "february":
-        return 2
-    case "march":
-        return 3
-    case "april":
-        return 4
-    case "may":
-        return 5
-    case "june":
-        return 6
-    case "july":
-        return 7
-    case "august":
-        return 8
-    case "september":
-        return 9
-    case "october":
-        return 10
-    case "november":
-        return 11
-    case "december":
-        return 12
-    default:
-        return 13
+    let components = calendar.components([NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: selectedDate)
+    
+    var newArray = [NSDate]()
+    
+    let year = components.year
+    let month = components.month
+    
+    var monthString = ""
+    
+    var firstDate = NSDate()
+    
+    if month < 10 {
+        monthString = "0" + String(month)
+    } else {
+        monthString = String(month)
     }
     
+    for index in 1...7 {
+        let iDate = stringToDate(String(year) + "-" + monthString + "-0" + String(index) + " 00:00")
+        let iComponents = calendar.components([NSCalendarUnit.Weekday], fromDate: iDate)
+        if (daynameToInteger(dayname) == iComponents.weekday){
+            firstDate = iDate
+        }
+    }
+    
+    var iteratorMonth = month
+    var currentWeek = firstDate
+    
+    while (iteratorMonth == month){
+        newArray.append(currentWeek)
+        currentWeek = addTime(0, monthAdded: 0, weekAdded: 1, dayAdded: 0, minuteAdded: 0, fromDate: currentWeek)
+        let currentComponent = calendar.components([NSCalendarUnit.Month], fromDate: currentWeek)
+        iteratorMonth = currentComponent.month
+    }
+    
+    return newArray
 }
 
-func weekToInteger(week: String) -> Int {
-    switch week.lowercaseString {
-    case "first":
-        return 1
-    case "second":
-        return 2
-    case "third":
-        return 3
-    case "fourth":
-        return 4
-    case "fifth":
-        return 5
-    case "last":
-        return -1
-    default:
-        return 6
-    }
-}
 
 
 func parseFrequencyValue(frequencyValueString: String) -> [String] {
@@ -357,7 +454,73 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
 
 
 
-func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
+//func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
+//    
+//    var frequencyValue = Array<String>()
+//    
+//    if (frequencyValueString != "") {
+//        frequencyValue = parseFrequencyValue(frequencyValueString)
+//    }
+//    
+//    var evaluation = false
+//    
+//    switch frequency.lowercaseString{
+//    case "weekly":
+//        evaluation = isWeekly(selected, series: seriesStartDate)
+//    case "biweekly":
+//        evaluation = isBiweekly(selected, series: seriesStartDate)
+//    case "weeklyon":
+//        for item in frequencyValue {
+//            let test = isWeeklyOn(item, selected: selected)
+//            if (test){
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "monthly":
+//        for item in frequencyValue {
+//            let test = isMonthlyOn(item, selected: selected)
+//            if (test){
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "annual":
+//        for item in frequencyValue {
+//            let test = isAnnualOn(item, selected: selected)
+//            if (test) {
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "semiannual":
+//        for item in frequencyValue {
+//            let test = isAnnualOn(item, selected: selected)
+//            if (test) {
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "quarterly":
+//        for item in frequencyValue {
+//            let test = isAnnualOn(item, selected: selected)
+//            if (test) {
+//                evaluation = true
+//                break
+//            }
+//        }
+//    default:
+//       print ("error")
+//    }
+//    
+//    return evaluation
+//}
+
+
+
+
+
+func filterSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
     
     var frequencyValue = Array<String>()
     
@@ -367,68 +530,69 @@ func frequencyClassifier(selected: String, seriesStartDate: String, frequency: S
     
     var evaluation = false
     
-    switch frequency.lowercaseString{
-    case "weekly":
-        evaluation = isWeekly(selected, series: seriesStartDate)
-    case "biweekly":
-        evaluation = isBiweekly(selected, series: seriesStartDate)
-    case "weeklyon":
-        for item in frequencyValue {
-            let test = isWeeklyOn(item, selected: selected)
-            if (test){
-                evaluation = true
-                break
-            }
-        }
-    case "monthly":
-        for item in frequencyValue {
-            let test = isMonthlyOn(item, selected: selected)
-            if (test){
-                evaluation = true
-                break
-            }
-        }
-    case "annual":
-        for item in frequencyValue {
-            let test = isAnnualOn(item, selected: selected)
-            if (test) {
-                evaluation = true
-                break
-            }
-        }
-    case "semiannual":
-        for item in frequencyValue {
-            let test = isAnnualOn(item, selected: selected)
-            if (test) {
-                evaluation = true
-                break
-            }
-        }
-    case "quarterly":
-        for item in frequencyValue {
-            let test = isAnnualOn(item, selected: selected)
-            if (test) {
-                evaluation = true
-                break
-            }
-        }
-    default:
-       print ("error")
-    }
+//    switch frequency.lowercaseString{
+//    case "weekly":
+//        evaluation = isWeekly(selected, series: seriesStartDate)
+//    case "biweekly":
+//        evaluation = isBiweekly(selected, series: seriesStartDate)
+//    case "weeklyon":
+//        for item in frequencyValue {
+//            let test = isWeeklyOn(item, selected: selected)
+//            if (test){
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "monthly":
+//        for item in frequencyValue {
+//            let test = isMonthlyOn(item, selected: selected)
+//            if (test){
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "annual":
+//        for item in frequencyValue {
+//            let test = isAnnualOn(item, selected: selected)
+//            if (test) {
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "semiannual":
+//        for item in frequencyValue {
+//            let test = isAnnualOn(item, selected: selected)
+//            if (test) {
+//                evaluation = true
+//                break
+//            }
+//        }
+//    case "quarterly":
+//        for item in frequencyValue {
+//            let test = isAnnualOn(item, selected: selected)
+//            if (test) {
+//                evaluation = true
+//                break
+//            }
+//        }
+//    default:
+//        print ("error")
+//    }
     
     return evaluation
+    
 }
 
 
-// Example of Usage of all functions above
+// Testing / Example of Usage of all functions above
 
 let series_start_date: String = "2016-04-01"
 
-let seriesStart = stringToDate(series_start_date + " 00:00")
+let seriesStart = stringToDate(series_start_date + " 00:00") // NSDate
 
-dateToString(seriesStart)
+dateToString(seriesStart) // String
 
-var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart)
+var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart) // NSDate
 
 eventDateStart = changeTimeOfDay(eventDateStart, newTime: "19:30")
 
@@ -438,28 +602,10 @@ let duration = 90
 
 addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
 
+isDateEarlier(seriesStart, laterDate: eventDateStart)
+
 dateStringToDayname(series_start_date)
 
 dayOfWhichWeekOfMonth("2016-04-23", fromMonthStart: false)
-
-isWeekly("2016-04-16", series: "2016-04-02")
-
-isBiweekly("2016-04-23", series: "2016-04-02")
-
-daynameToInteger("thursday")
-
-monthToInteger("october")
-
-weekToInteger("Second")
-
-isMonthlyOn("third monday", selected: "2016-04-18")
-
-isAnnualOn("last Friday in December", selected: "2016-11-25")
-
-let a = "[monday,wednesday]"
-let b = "[first saturday, second saturday, third saturday]"
-let c = "[last friday in december, first friday in june]"
-
-frequencyClassifier("2016-06-03", seriesStartDate: "2016-04-06", frequency: "semiannual", frequencyValueString: c)
 
 
