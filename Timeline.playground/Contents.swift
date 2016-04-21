@@ -270,7 +270,7 @@ func parseMonthlyFrequencyString(weekOrderSpaceDayName: String) -> [Int]{
 
 
 
-func isAnnualOn(weekOrderSpaceDaynameInMonth: String, selected: String) -> Bool {
+func parseAnnualFrequencyString(weekOrderSpaceDaynameInMonth: String) -> [Int] {
     
     var i = 0
     let length = weekOrderSpaceDaynameInMonth.characters.count
@@ -312,22 +312,8 @@ func isAnnualOn(weekOrderSpaceDaynameInMonth: String, selected: String) -> Bool 
         i += 1
     }
     
-    let dayCheck = (dayname == dateStringToDayname(selected))
-
-    var weekCheck = false
+    return [weekToInteger(weekString), daynameToInteger(dayname), monthToInteger(month)]
     
-    let weekNum = weekToInteger(weekString)
-    
-    if (weekNum < 0){
-        weekCheck = (-1 * weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: false))
-    } else {
-        weekCheck = (weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: true))
-    }
-
-    
-    let monthCheck = (monthToInteger(month) == dateStringToMonth(selected + " 00:00"))
-    
-    return (dayCheck && weekCheck && monthCheck)
 }
 
 
