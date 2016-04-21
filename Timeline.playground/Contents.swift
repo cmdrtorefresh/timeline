@@ -237,7 +237,7 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
 }
 
 
-func isMonthlyOn(weekOrderSpaceDayName: String, selected: String) -> Bool {
+func parseMonthlyFrequencyString(weekOrderSpaceDayName: String) -> [Int]{
     
     var i = 0
     let length = weekOrderSpaceDayName.characters.count
@@ -258,22 +258,14 @@ func isMonthlyOn(weekOrderSpaceDayName: String, selected: String) -> Bool {
         i += 1
     }
     
-    let dayCheck = (dayname == dateStringToDayname(selected))
-    
-    var weekCheck = false
     
     let weekNum = weekToInteger(weekString)
     
-    if (weekNum < 0){
-        weekCheck = (-1 * weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: false))
-    } else {
-        weekCheck = (weekNum == dayOfWhichWeekOfMonth(selected, fromMonthStart: true))
-    }
-    
-    return dayCheck && weekCheck
+    let dayNum = daynameToInteger(dayname)
+
+    return [weekNum, dayNum]
     
 }
-
 
 
 
@@ -451,10 +443,9 @@ func isWeeklyOn(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDat
 }
 
 
-
-let min = stringToDate("2016-04-25 18:30")
+let min = stringToDate("2016-04-25 19:00")
 let max = stringToDate("2016-04-25 22:00")
-let startDate = "2016-04-04"
+let startDate = "2016-04-06"
 let startTime = "19:00"
 let fvs = "[monday, wednesday]"
 
@@ -505,6 +496,34 @@ func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) 
 
 
 
+func createMonthlyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> [NSDate]{
+    
+    let seriesEventStartDateTime = stringToDate(seriesStartDateString + " " + eventStartTimeString)
+    let startComponents = calendar.component([NSCalendarUnit.Weekday], fromDate: <#T##NSDate#>)
+    
+    let frequencyValue = parseFrequencyValue(frequencyValueString)
+    
+    var eventStartAfterWindowEnd = false
+    
+    var eventStartTime = seriesEventStartDateTime
+    
+    while !eventStartAfterWindowEnd {
+        eventStartTime = addTime(0, monthAdded: 1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+//        datesWithDaynameInSelectedDateMonth(selectedDate: eventStartTime, dayname: String)
+        
+        
+        
+        if (isDateEarlier(selectedMaximum, laterDate: eventStartTime)){
+            eventStartAfterWindowEnd = true
+        }
+    }
+    
+    eventStartTime = addTime(0, monthAdded: 0, weekAdded: -1, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+    let eventEndTime = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: seriesDurationMinute, fromDate: eventStartTime)
+    
+    return [eventStartTime, eventEndTime]
+    
+}
 
 
 
