@@ -237,12 +237,6 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
 }
 
 
-
-
-func isWeeklyOn(dayname: String, selected: String) -> Bool {
-    return (dateStringToDayname(selected) == dayname)
-}
-
 func isMonthlyOn(weekOrderSpaceDayName: String, selected: String) -> Bool {
     
     var i = 0
@@ -435,6 +429,37 @@ func createOtherWeeklyOnStartingDatesFromExistingDate(availableSeriesStartDateSt
     
     return resultArray
 }
+
+
+
+func isWeeklyOn(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int, frequencyValueString: String) -> Bool {
+    
+    var dates = [NSDate]()
+    dates.append(stringToDate(seriesStartDate + " " + eventStartTime))
+    dates = dates + (createOtherWeeklyOnStartingDatesFromExistingDate(seriesStartDate, eventStartTimeString: eventStartTime, frequencyValueString: frequencyValueString))
+    
+    for index in dates {
+        let dateString = dateToString(index)
+        let hourString = dateToStringHour(index)
+        
+        if (isWeekly(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDate: dateString, eventStartTime: hourString, seriesDurationMinute: seriesDurationMinute)){
+            return true
+        }
+    }
+    
+    return false
+}
+
+
+
+let min = stringToDate("2016-04-25 18:30")
+let max = stringToDate("2016-04-25 22:00")
+let startDate = "2016-04-04"
+let startTime = "19:00"
+let fvs = "[monday, wednesday]"
+
+isWeekly(min, selectedMaximum: max, seriesStartDate: startDate, eventStartTime: startTime, seriesDurationMinute: 90)
+isWeeklyOn(min, selectedMaximum: max, seriesStartDate: startDate, eventStartTime: startTime, seriesDurationMinute: 90, frequencyValueString: fvs)
 
 
 
