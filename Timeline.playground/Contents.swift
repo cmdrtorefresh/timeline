@@ -202,6 +202,43 @@ func weekToInteger(week: String) -> Int {
 
 
 
+func parseFrequencyValue(frequencyValueString: String) -> [String] {
+    var i = 1
+    let length = frequencyValueString.characters.count
+    
+    var valueArray = [String]()
+    
+    var word = ""
+    
+    while (i < length) {
+        
+        let index = frequencyValueString.startIndex.advancedBy(i)
+        let nextIndex = frequencyValueString.startIndex.advancedBy(i+1)
+        let character = String(frequencyValueString[index]).lowercaseString
+        
+        if (character == "]"){
+            valueArray.append(word)
+            word = ""
+        } else if (character != ",") {
+            word += character
+        } else {
+            valueArray.append(word)
+            word = ""
+            if (String(frequencyValueString[nextIndex]).lowercaseString == " "){
+                i += 1
+            }
+        }
+        
+        i += 1
+    }
+    
+    return valueArray
+    
+}
+
+
+
+
 func isWeeklyOn(dayname: String, selected: String) -> Bool {
     return (dateStringToDayname(selected) == dayname)
 }
@@ -371,6 +408,36 @@ func isBiweekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDat
 
 
 
+func createOtherWeeklyOnStartingDatesFromExistingDate(availableSeriesStartDateString: String, eventStartTimeString: String, frequencyValueString: String) -> [NSDate]{
+    
+    let frequencyValueArray = parseFrequencyValue(frequencyValueString)
+    
+    var availableSeriesStartDateDay = Int()
+    
+    var resultArray = [NSDate]()
+    
+    let availableSeriesStartDate = stringToDate(availableSeriesStartDateString + " " + eventStartTimeString)
+    
+    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: availableSeriesStartDate)
+    
+    availableSeriesStartDateDay = components.weekday
+    
+    for index in frequencyValueArray {
+        var dayAddition = 0
+        if (daynameToInteger(index) > availableSeriesStartDateDay){
+            dayAddition = (daynameToInteger(index) - availableSeriesStartDateDay) % 7
+            resultArray.append(addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: dayAddition, minuteAdded: 0, fromDate: availableSeriesStartDate))
+        } else if (daynameToInteger(index) < availableSeriesStartDateDay){
+            dayAddition = (7 + daynameToInteger(index) - availableSeriesStartDateDay) % 7
+            resultArray.append(addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: dayAddition, minuteAdded: 0, fromDate: availableSeriesStartDate))
+        }
+    }
+    
+    return resultArray
+}
+
+
+
 func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) -> [NSDate]{
     
     let components = calendar.components([NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: selectedDate)
@@ -413,39 +480,6 @@ func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) 
 
 
 
-func parseFrequencyValue(frequencyValueString: String) -> [String] {
-    var i = 1
-    let length = frequencyValueString.characters.count
-
-    var valueArray = [String]()
-    
-    var word = ""
-    
-    while (i < length) {
-        
-        let index = frequencyValueString.startIndex.advancedBy(i)
-        let nextIndex = frequencyValueString.startIndex.advancedBy(i+1)
-        let character = String(frequencyValueString[index]).lowercaseString
-        
-        if (character == "]"){
-            valueArray.append(word)
-            word = ""
-        } else if (character != ",") {
-            word += character
-        } else {
-            valueArray.append(word)
-            word = ""
-            if (String(frequencyValueString[nextIndex]).lowercaseString == " "){
-                i += 1
-            }
-        }
-        
-        i += 1
-    }
-    
-    return valueArray
-    
-}
 
 
 
@@ -516,16 +550,16 @@ func parseFrequencyValue(frequencyValueString: String) -> [String] {
 
 
 
-func filterSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
-    
-    var frequencyValue = Array<String>()
-    
-    if (frequencyValueString != "") {
-        frequencyValue = parseFrequencyValue(frequencyValueString)
-    }
-    
-    var evaluation = false
-    
+//func filterSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
+//    
+//    var frequencyValue = Array<String>()
+//    
+//    if (frequencyValueString != "") {
+//        frequencyValue = parseFrequencyValue(frequencyValueString)
+//    }
+//    
+//    var evaluation = false
+//    
 //    switch frequency.lowercaseString{
 //    case "weekly":
 //        evaluation = isWeekly(selected, series: seriesStartDate)
@@ -574,10 +608,10 @@ func filterSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartD
 //    default:
 //        print ("error")
 //    }
-    
-    return evaluation
-    
-}
+//    
+//    return evaluation
+//    
+//}
 
 
 // Testing / Example of Usage of all functions above
