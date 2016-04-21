@@ -362,16 +362,12 @@ func isWeekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:
 
 
 
-func isBiweekly(selected: String, series:String) -> Bool {
-    let selectedDate = stringToDate(selected + " 00:00")
-    let seriesDate = stringToDate(series + " 00:00")
+func isBiweekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int) -> Bool {
     
-    let diffDateComponents = calendar.components([NSCalendarUnit.Year, NSCalendarUnit.Month, NSCalendarUnit.Day], fromDate: seriesDate, toDate: selectedDate, options: NSCalendarOptions.init(rawValue: 0))
-    return (diffDateComponents.day % 14 == 0)
+    let eventStopTime = createBiweeklyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: seriesDurationMinute)[1]
     
+    return isDateEarlier(selectedMinimum, laterDate: eventStopTime)
 }
-
-
 
 
 
