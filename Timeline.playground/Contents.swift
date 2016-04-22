@@ -133,7 +133,7 @@ func daynameToInteger(dayname: String) -> Int {
     case "monday":
         return 2
     case "tuesday":
-        return 2
+        return 3
     case "wednesday":
         return 4
     case "thursday":
@@ -144,6 +144,27 @@ func daynameToInteger(dayname: String) -> Int {
         return 7
     default:
         return 8
+    }
+}
+
+func daynameFromInteger(number: Int) -> String {
+    switch number {
+    case 1:
+        return "sunday"
+    case 2:
+        return "monday"
+    case 3:
+        return "tuesday"
+    case 4:
+        return "wednesday"
+    case 5:
+        return "thursday"
+    case 6:
+        return "friday"
+    case 7:
+        return "saturday"
+    default:
+        return "error"
     }
 }
 
@@ -429,20 +450,10 @@ func isWeeklyOn(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDat
 }
 
 
-let min = stringToDate("2016-04-25 19:00")
-let max = stringToDate("2016-04-25 22:00")
-let startDate = "2016-04-06"
-let startTime = "19:00"
-let fvs = "[monday, wednesday]"
-
-isWeekly(min, selectedMaximum: max, seriesStartDate: startDate, eventStartTime: startTime, seriesDurationMinute: 90)
-isWeeklyOn(min, selectedMaximum: max, seriesStartDate: startDate, eventStartTime: startTime, seriesDurationMinute: 90, frequencyValueString: fvs)
-
-
 
 func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) -> [NSDate]{
     
-    let components = calendar.components([NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: selectedDate)
+    let components = calendar.components([NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday, NSCalendarUnit.Hour, NSCalendarUnit.Minute], fromDate: selectedDate)
     
     var newArray = [NSDate]()
     
@@ -450,6 +461,8 @@ func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) 
     let month = components.month
     
     var monthString = ""
+    var hourString = ""
+    var minuteString = ""
     
     var firstDate = NSDate()
     
@@ -459,8 +472,21 @@ func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) 
         monthString = String(month)
     }
     
+    if components.hour < 10 {
+        hourString = "0" + String(components.hour)
+    } else {
+        hourString = String(components.hour)
+    }
+    
+    if components.minute < 10 {
+        minuteString = "0" + String(components.minute)
+    } else {
+        minuteString = String(components.minute)
+    }
+    
+    
     for index in 1...7 {
-        let iDate = stringToDate(String(year) + "-" + monthString + "-0" + String(index) + " 00:00")
+        let iDate = stringToDate(String(year) + "-" + monthString + "-0" + String(index) + " " + hourString + ":" + minuteString)
         let iComponents = calendar.components([NSCalendarUnit.Weekday], fromDate: iDate)
         if (daynameToInteger(dayname) == iComponents.weekday){
             firstDate = iDate
@@ -482,34 +508,131 @@ func datesWithDaynameInSelectedDateMonth(selectedDate: NSDate, dayname: String) 
 
 
 
-func createMonthlyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> [NSDate]{
+
+func createMonthlyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValue: [Int]) -> [NSDate] {
     
     let seriesEventStartDateTime = stringToDate(seriesStartDateString + " " + eventStartTimeString)
-    let startComponents = calendar.component([NSCalendarUnit.Weekday], fromDate: <#T##NSDate#>)
     
-    let frequencyValue = parseFrequencyValue(frequencyValueString)
+    let startWeekday = calendar.component([NSCalendarUnit.Weekday], fromDate: seriesEventStartDateTime)
+
+    let dayname = daynameFromInteger(startWeekday)
     
     var eventStartAfterWindowEnd = false
     
     var eventStartTime = seriesEventStartDateTime
-    
+
     while !eventStartAfterWindowEnd {
         eventStartTime = addTime(0, monthAdded: 1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
-//        datesWithDaynameInSelectedDateMonth(selectedDate: eventStartTime, dayname: String)
-        
-        
+        let newDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+     
+        if frequencyValue[0] > 0 {
+            eventStartTime = newDatesArray[frequencyValue[0]-1]
+        } else {
+            let index = newDatesArray.count - 1
+            eventStartTime = newDatesArray[index]
+        }
         
         if (isDateEarlier(selectedMaximum, laterDate: eventStartTime)){
             eventStartAfterWindowEnd = true
         }
     }
+  
+    eventStartTime = addTime(0, monthAdded: -1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+    let monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
     
-    eventStartTime = addTime(0, monthAdded: 0, weekAdded: -1, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+    if frequencyValue[0] > 0 {
+        eventStartTime = monthDatesArray[frequencyValue[0]-1]
+    } else {
+        let index = monthDatesArray.count - 1
+        eventStartTime = monthDatesArray[index]
+    }
+
     let eventEndTime = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: seriesDurationMinute, fromDate: eventStartTime)
     
     return [eventStartTime, eventEndTime]
     
 }
+
+
+func createAllMonthlyStartingDatesFromExistingDate(availableSeriesStartDateString: String, eventStartTimeString: String, frequencyValueString: String) -> [AnyObject] {
+    
+    var datesAndValues = [AnyObject]()
+    
+    let frequencyValueArray = parseFrequencyValue(frequencyValueString)
+    
+    let availableSeriesStartDate = stringToDate(availableSeriesStartDateString + " " + eventStartTimeString)
+    
+    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: availableSeriesStartDate)
+    
+    for index in frequencyValueArray {
+        let freqValue = parseMonthlyFrequencyString(index)
+        if freqValue[0] > 0 && freqValue[0] == dayOfWhichWeekOfMonth(availableSeriesStartDateString, fromMonthStart: true) && components.weekday == freqValue[1] {
+            datesAndValues.append([availableSeriesStartDate, freqValue])
+        } else if freqValue[0] < 0 && -1 * freqValue[0] == dayOfWhichWeekOfMonth(availableSeriesStartDateString, fromMonthStart: false) && components.weekday == freqValue[1] {
+            datesAndValues.append([availableSeriesStartDate, freqValue])
+        } else {
+            let wholeMonth = datesWithDaynameInSelectedDateMonth(availableSeriesStartDate, dayname: daynameFromInteger(freqValue[1]))
+            var date = NSDate()
+            
+            if (freqValue[0] > 0){
+                date = wholeMonth[freqValue[0] - 1]
+            } else {
+                let i = wholeMonth.count
+                date = wholeMonth[i-1]
+            }
+            
+            datesAndValues.append([date, freqValue])
+            
+        }
+    }
+    
+    return datesAndValues
+    
+}
+
+
+
+func isMonthly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> Bool {
+    
+    let datesAndValues = createAllMonthlyStartingDatesFromExistingDate(seriesStartDateString, eventStartTimeString: eventStartTimeString, frequencyValueString: frequencyValueString) 
+    
+    for dateAndValue in datesAndValues {
+        let date = dateAndValue[0] as! NSDate
+        let dateString = dateToString(date)
+        let freqValue = dateAndValue[1] as! [Int]
+        
+        let startAndStop = createMonthlyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: dateString, eventStartTimeString: eventStartTimeString, seriesDurationMinute: seriesDurationMinute, frequencyValue: freqValue)
+        if isDateEarlier(selectedMinimum, laterDate: startAndStop[1]){
+            return true
+        }
+    }
+    
+    return false
+}
+
+
+
+
+
+
+let min = stringToDate("2016-04-23 20:00")
+let max = stringToDate("2016-04-23 23:59")
+let seriesStart = "2016-01-23"
+let eventStart = "23:00"
+let freq = [2,7]
+let freqString = "[fourth saturday]"
+createMonthlyEventFromSeries(min, selectedMaximum: max, seriesStartDateString: seriesStart, eventStartTimeString: eventStart, seriesDurationMinute: 180, frequencyValue: freq)
+isMonthly(min, selectedMaximum: max, seriesStartDateString: seriesStart, eventStartTimeString: eventStart, seriesDurationMinute: 45, frequencyValueString: freqString)
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -648,21 +771,21 @@ func createMonthlyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDa
 
 let series_start_date: String = "2016-04-01"
 
-let seriesStart = stringToDate(series_start_date + " 00:00") // NSDate
+//let seriesStart = stringToDate(series_start_date + " 00:00") // NSDate
+//
+//dateToString(seriesStart) // String
+//
+//var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart) // NSDate
 
-dateToString(seriesStart) // String
-
-var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart) // NSDate
-
-eventDateStart = changeTimeOfDay(eventDateStart, newTime: "19:30")
-
-dateToStringHour(eventDateStart)
+//eventDateStart = changeTimeOfDay(eventDateStart, newTime: "19:30")
+//
+//dateToStringHour(eventDateStart)
 
 let duration = 90
 
-addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
-
-isDateEarlier(seriesStart, laterDate: eventDateStart)
+//addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
+//
+//isDateEarlier(seriesStart, laterDate: eventDateStart)
 
 dateStringToDayname(series_start_date)
 
