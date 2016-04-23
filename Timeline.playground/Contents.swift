@@ -383,20 +383,28 @@ func createBiweeklyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSD
 }
 
 
-func isWeekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int) -> Bool {
+func isWeekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int) -> [NSDate] {
     
-    let eventStopTime = createWeeklyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: seriesDurationMinute)[1]
+    let eventStartStopTime = createWeeklyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: seriesDurationMinute)
 
-    return isDateEarlier(selectedMinimum, laterDate: eventStopTime)
+    if isDateEarlier(selectedMinimum, laterDate: eventStartStopTime[1]){
+        return eventStartStopTime
+    } else {
+        return []
+    }
 }
 
 
 
-func isBiweekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int) -> Bool {
+func isBiweekly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int) -> [NSDate] {
     
-    let eventStopTime = createBiweeklyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: seriesDurationMinute)[1]
+    let eventStartStopTime = createBiweeklyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: seriesDurationMinute)
     
-    return isDateEarlier(selectedMinimum, laterDate: eventStopTime)
+    if isDateEarlier(selectedMinimum, laterDate: eventStartStopTime[1]) {
+        return eventStartStopTime
+    } else {
+        return []
+    }
 }
 
 
@@ -431,22 +439,22 @@ func createOtherWeeklyOnStartingDatesFromExistingDate(availableSeriesStartDateSt
 
 
 
-func isWeeklyOn(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int, frequencyValueString: String) -> Bool {
+func isWeeklyOn(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate:String, eventStartTime: String, seriesDurationMinute: Int, frequencyValueString: String) -> [NSDate]{
     
     var dates = [NSDate]()
     dates.append(stringToDate(seriesStartDate + " " + eventStartTime))
     dates = dates + (createOtherWeeklyOnStartingDatesFromExistingDate(seriesStartDate, eventStartTimeString: eventStartTime, frequencyValueString: frequencyValueString))
     
     for index in dates {
+//        let day = calendar.component(NSCalendarUnit.Weekday, fromDate: index)
         let dateString = dateToString(index)
         let hourString = dateToStringHour(index)
         
-        if (isWeekly(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDate: dateString, eventStartTime: hourString, seriesDurationMinute: seriesDurationMinute)){
-            return true
+        if (!isWeekly(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDate: dateString, eventStartTime: hourString, seriesDurationMinute: seriesDurationMinute).isEmpty){
+            return isWeekly(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDate: dateString, eventStartTime: hourString, seriesDurationMinute: seriesDurationMinute)
         }
     }
-    
-    return false
+    return []
 }
 
 
@@ -592,7 +600,7 @@ func createAllMonthlyStartingDatesFromExistingDate(availableSeriesStartDateStrin
 
 
 
-func isMonthly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> Bool {
+func isMonthly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> [NSDate] {
     
     let datesAndValues = createAllMonthlyStartingDatesFromExistingDate(seriesStartDateString, eventStartTimeString: eventStartTimeString, frequencyValueString: frequencyValueString) 
     
@@ -603,11 +611,11 @@ func isMonthly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate
         
         let startAndStop = createMonthlyEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: dateString, eventStartTimeString: eventStartTimeString, seriesDurationMinute: seriesDurationMinute, frequencyValue: freqValue)
         if isDateEarlier(selectedMinimum, laterDate: startAndStop[1]){
-            return true
+            return startAndStop
         }
     }
     
-    return false
+    return []
 }
 
 
@@ -719,7 +727,7 @@ func createAllAnnualStartingDatesFromExistingDate(availableSeriesStartDateString
 }
 
 
-func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> Bool {
+func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> [NSDate]{
     
     let datesAndValues = createAllAnnualStartingDatesFromExistingDate(seriesStartDateString, eventStartTimeString: eventStartTimeString, frequencyValueString: frequencyValueString)
     
@@ -730,11 +738,11 @@ func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateS
         
         let startAndStop = createAnnualEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: dateString, eventStartTimeString: eventStartTimeString, seriesDurationMinute: seriesDurationMinute, frequencyValue: freqValue)
         if isDateEarlier(selectedMinimum, laterDate: startAndStop[1]){
-            return true
+            return startAndStop
         }
     }
     
-    return false
+    return []
 }
 
 
@@ -747,86 +755,46 @@ func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateS
 
 let min = stringToDate("2016-12-30 20:00")
 let max = stringToDate("2016-12-30 23:59")
-
-createAnnualEventFromSeries(min, selectedMaximum: max, seriesStartDateString: "2013-12-27", eventStartTimeString: "19:00", seriesDurationMinute: (5*24*60), frequencyValue: [-1,6,12])
-
-isAnnual(min, selectedMaximum: max, seriesStartDateString: "2013-12-27", eventStartTimeString: "19:00", seriesDurationMinute: (5*24*60), frequencyValueString: "[last friday in december]")
-
-
-
+isWeekly(min, selectedMaximum: max, seriesStartDate: "2016-04-22", eventStartTime: "20:00", seriesDurationMinute: 45)
+isBiweekly(min, selectedMaximum: max, seriesStartDate: "2016-04-29", eventStartTime: "20:00", seriesDurationMinute: 45)
+isWeeklyOn(min, selectedMaximum: max, seriesStartDate: "2016-04-26", eventStartTime: "22:00", seriesDurationMinute: 45, frequencyValueString: "[tuesday]")
+isMonthly(min, selectedMaximum: max, seriesStartDateString: "2016-04-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[last friday]")
+isAnnual(min, selectedMaximum: max, seriesStartDateString: "2013-11-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[last friday in november]")
 
 
 
 
 
 
+func frequencyClassifier(selectedMin: NSDate, selectedMax: NSDate, seriesStartDate: String, eventStartTime: String, durationMinute: Int, frequency: String, frequencyValueString: String) -> [NSDate] {
+    
+    var startStopDate = [NSDate]()
+    
+    switch frequency.lowercaseString{
+    case "weekly":
+        startStopDate = isWeekly(selectedMin, selectedMaximum: selectedMax, seriesStartDate: seriesStartDate, eventStartTime: eventStartTime, seriesDurationMinute: durationMinute)
+    case "biweekly":
+        startStopDate = isBiweekly(selectedMin, selectedMaximum: selectedMax, seriesStartDate: seriesStartDate, eventStartTime: eventStartTime, seriesDurationMinute: durationMinute)
+    case "weeklyon":
+        startStopDate = isWeeklyOn(selectedMin, selectedMaximum: selectedMax, seriesStartDate: seriesStartDate, eventStartTime: eventStartTime, seriesDurationMinute: durationMinute, frequencyValueString: frequencyValueString)
+    case "monthly":
+        startStopDate = isMonthly(selectedMin, selectedMaximum: selectedMax, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: durationMinute, frequencyValueString: frequencyValueString)
+    case "annual":
+        startStopDate = isAnnual(selectedMin, selectedMaximum: selectedMax, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: durationMinute, frequencyValueString: frequencyValueString)
+    case "quarterly":
+        startStopDate = isAnnual(selectedMin, selectedMaximum: selectedMax, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: durationMinute, frequencyValueString: frequencyValueString)
+    case "semiannual":
+        startStopDate = isAnnual(selectedMin, selectedMaximum: selectedMax, seriesStartDateString: seriesStartDate, eventStartTimeString: eventStartTime, seriesDurationMinute: durationMinute, frequencyValueString: frequencyValueString)
+    default:
+        print ("error")
+    }
 
-
-//func frequencyClassifier(selected: String, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
-//    
-//    var frequencyValue = Array<String>()
-//    
-//    if (frequencyValueString != "") {
-//        frequencyValue = parseFrequencyValue(frequencyValueString)
-//    }
-//    
-//    var evaluation = false
-//    
-//    switch frequency.lowercaseString{
-//    case "weekly":
-//        evaluation = isWeekly(selected, series: seriesStartDate)
-//    case "biweekly":
-//        evaluation = isBiweekly(selected, series: seriesStartDate)
-//    case "weeklyon":
-//        for item in frequencyValue {
-//            let test = isWeeklyOn(item, selected: selected)
-//            if (test){
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "monthly":
-//        for item in frequencyValue {
-//            let test = isMonthlyOn(item, selected: selected)
-//            if (test){
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "annual":
-//        for item in frequencyValue {
-//            let test = isAnnualOn(item, selected: selected)
-//            if (test) {
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "semiannual":
-//        for item in frequencyValue {
-//            let test = isAnnualOn(item, selected: selected)
-//            if (test) {
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "quarterly":
-//        for item in frequencyValue {
-//            let test = isAnnualOn(item, selected: selected)
-//            if (test) {
-//                evaluation = true
-//                break
-//            }
-//        }
-//    default:
-//       print ("error")
-//    }
-//    
-//    return evaluation
-//}
+    return startStopDate
+}
 
 
 
-
+frequencyClassifier(min, selectedMax: max, seriesStartDate: "2013-11-29", eventStartTime: "22:00", durationMinute: 120, frequency: "quarterly", frequencyValueString: "[last friday in march, last friday in june, last friday in september, last friday in december]")
 
 //func filterSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
 //    
@@ -890,30 +858,3 @@ isAnnual(min, selectedMaximum: max, seriesStartDateString: "2013-12-27", eventSt
 //    return evaluation
 //    
 //}
-
-
-// Testing / Example of Usage of all functions above
-
-let series_start_date: String = "2016-04-01"
-
-//let seriesStart = stringToDate(series_start_date + " 00:00") // NSDate
-//
-//dateToString(seriesStart) // String
-//
-//var eventDateStart = addTime(0, monthAdded: 0, weekAdded: 4, dayAdded: 0, minuteAdded: 0, fromDate: seriesStart) // NSDate
-
-//eventDateStart = changeTimeOfDay(eventDateStart, newTime: "19:30")
-//
-//dateToStringHour(eventDateStart)
-
-let duration = 90
-
-//addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: duration, fromDate: eventDateStart)
-//
-//isDateEarlier(seriesStart, laterDate: eventDateStart)
-
-dateStringToDayname(series_start_date)
-
-dayOfWhichWeekOfMonth("2016-04-23", fromMonthStart: false)
-
-
