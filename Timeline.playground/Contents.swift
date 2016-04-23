@@ -611,21 +611,146 @@ func isMonthly(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate
 }
 
 
+func createAnnualEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValue: [Int]) -> [NSDate] {
+    
+    let seriesEventStartDateTime = stringToDate(seriesStartDateString + " " + eventStartTimeString)
+    
+    let startWeekday = calendar.component([NSCalendarUnit.Weekday], fromDate: seriesEventStartDateTime)
+    
+    let dayname = daynameFromInteger(startWeekday)
+    
+    var eventStartAfterWindowEnd = false
+    
+    var eventStartTime = seriesEventStartDateTime
+    
+    while !eventStartAfterWindowEnd {
+        eventStartTime = addTime(1, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+        let newDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+        
+        if frequencyValue[0] > 0 {
+            eventStartTime = newDatesArray[frequencyValue[0]-1]
+        } else {
+            let index = newDatesArray.count - 1
+            eventStartTime = newDatesArray[index]
+        }
+        
+        if (isDateEarlier(selectedMaximum, laterDate: eventStartTime)){
+            eventStartAfterWindowEnd = true
+        }
+    }
+    
+    eventStartTime = addTime(-1, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+    let monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+    
+    if frequencyValue[0] > 0 {
+        eventStartTime = monthDatesArray[frequencyValue[0]-1]
+    } else {
+        let index = monthDatesArray.count - 1
+        eventStartTime = monthDatesArray[index]
+    }
+    
+    let eventEndTime = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: seriesDurationMinute, fromDate: eventStartTime)
+    
+    return [eventStartTime, eventEndTime]
+}
 
 
 
 
-let min = stringToDate("2016-04-23 20:00")
-let max = stringToDate("2016-04-23 23:59")
-let seriesStart = "2016-01-23"
-let eventStart = "23:00"
-let freq = [2,7]
-let freqString = "[fourth saturday]"
-createMonthlyEventFromSeries(min, selectedMaximum: max, seriesStartDateString: seriesStart, eventStartTimeString: eventStart, seriesDurationMinute: 180, frequencyValue: freq)
-isMonthly(min, selectedMaximum: max, seriesStartDateString: seriesStart, eventStartTimeString: eventStart, seriesDurationMinute: 45, frequencyValueString: freqString)
+func createAllAnnualStartingDatesFromExistingDate(availableSeriesStartDateString: String, eventStartTimeString: String, frequencyValueString: String) -> [AnyObject] {
+    
+    var datesAndValues = [AnyObject]()
+    
+    let frequencyValueArray = parseFrequencyValue(frequencyValueString)
+    
+    let availableSeriesStartDate = stringToDate(availableSeriesStartDateString + " " + eventStartTimeString)
+    
+    let components = calendar.components([NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year, NSCalendarUnit.Weekday], fromDate: availableSeriesStartDate)
+    
+    let year = components.year
+    let day = components.day
+    
+    for index in frequencyValueArray {
+        let freqValue = parseAnnualFrequencyString(index)
+        if freqValue[0] > 0 && freqValue[0] == dayOfWhichWeekOfMonth(availableSeriesStartDateString, fromMonthStart: true) && components.weekday == freqValue[1] && components.month == freqValue[2]{
+            datesAndValues.append([availableSeriesStartDate, freqValue])
+        } else if freqValue[0] < 0 && -1 * freqValue[0] == dayOfWhichWeekOfMonth(availableSeriesStartDateString, fromMonthStart: false) && components.weekday == freqValue[1] && components.month == freqValue[2] {
+            datesAndValues.append([availableSeriesStartDate, freqValue])
+        } else {
+            let month = freqValue[2]
+            
+            var monthString = ""
+            var dayString = ""
+            
+            if month < 10 {
+                monthString = "0" + String(month)
+            } else {
+                monthString = String(month)
+            }
+            
+            if day < 10 {
+                dayString = "0" + String(day)
+            } else {
+                dayString = String(day)
+            }
+            
+            var date = stringToDate(String(year) + "-" + monthString + "-" + dayString + " " + eventStartTimeString)
+            
+            if isDateEarlier(date, laterDate: availableSeriesStartDate){
+                date = stringToDate(String(year+1) + "-" + monthString + "-" + dayString + " " + eventStartTimeString)
+            }
+            
+            let wholeMonth = datesWithDaynameInSelectedDateMonth(date, dayname: daynameFromInteger(freqValue[1]))
+            
+            if (freqValue[0] > 0){
+                date = wholeMonth[freqValue[0] - 1]
+            } else {
+                let i = wholeMonth.count
+                date = wholeMonth[i-1]
+            }
+            
+            datesAndValues.append([date, freqValue])
+            
+        }
+    }
+    
+    return datesAndValues
+    
+}
+
+
+func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateString: String, eventStartTimeString: String, seriesDurationMinute: Int, frequencyValueString: String) -> Bool {
+    
+    let datesAndValues = createAllAnnualStartingDatesFromExistingDate(seriesStartDateString, eventStartTimeString: eventStartTimeString, frequencyValueString: frequencyValueString)
+    
+    for dateAndValue in datesAndValues {
+        let date = dateAndValue[0] as! NSDate
+        let dateString = dateToString(date)
+        let freqValue = dateAndValue[1] as! [Int]
+        
+        let startAndStop = createAnnualEventFromSeries(selectedMinimum, selectedMaximum: selectedMaximum, seriesStartDateString: dateString, eventStartTimeString: eventStartTimeString, seriesDurationMinute: seriesDurationMinute, frequencyValue: freqValue)
+        if isDateEarlier(selectedMinimum, laterDate: startAndStop[1]){
+            return true
+        }
+    }
+    
+    return false
+}
 
 
 
+
+
+
+
+
+
+let min = stringToDate("2016-12-30 20:00")
+let max = stringToDate("2016-12-30 23:59")
+
+createAnnualEventFromSeries(min, selectedMaximum: max, seriesStartDateString: "2013-12-27", eventStartTimeString: "19:00", seriesDurationMinute: (5*24*60), frequencyValue: [-1,6,12])
+
+isAnnual(min, selectedMaximum: max, seriesStartDateString: "2013-12-27", eventStartTimeString: "19:00", seriesDurationMinute: (5*24*60), frequencyValueString: "[last friday in december]")
 
 
 
