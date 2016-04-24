@@ -199,7 +199,6 @@ func monthToInteger(month: String) -> Int {
     default:
         return 13
     }
-    
 }
 
 func weekToInteger(week: String) -> Int {
@@ -532,8 +531,10 @@ func createMonthlyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDa
     while !eventStartAfterWindowEnd {
         eventStartTime = addTime(0, monthAdded: 1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
         let newDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
-     
-        if frequencyValue[0] > 0 {
+        
+        if frequencyValue[0] == 5 && newDatesArray.count <= 4{
+            eventStartTime = newDatesArray[3]
+        } else if frequencyValue[0] > 0 {
             eventStartTime = newDatesArray[frequencyValue[0]-1]
         } else {
             let index = newDatesArray.count - 1
@@ -544,17 +545,36 @@ func createMonthlyEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDa
             eventStartAfterWindowEnd = true
         }
     }
-  
-    eventStartTime = addTime(0, monthAdded: -1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
-    let monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
     
-    if frequencyValue[0] > 0 {
-        eventStartTime = monthDatesArray[frequencyValue[0]-1]
+    if frequencyValue[0] == 5 {
+        var fifthWeekFound = false
+    
+        while !fifthWeekFound {
+  
+            eventStartTime = addTime(0, monthAdded: -1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+            let monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+  
+            if monthDatesArray.count > 4 {
+                fifthWeekFound = true
+                eventStartTime = monthDatesArray[4]
+            }
+            
+            
+        }
+        
     } else {
-        let index = monthDatesArray.count - 1
-        eventStartTime = monthDatesArray[index]
+        
+        eventStartTime = addTime(0, monthAdded: -1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+        let monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+        
+        if frequencyValue[0] > 0 {
+            eventStartTime = monthDatesArray[frequencyValue[0]-1]
+        } else {
+            let index = monthDatesArray.count - 1
+            eventStartTime = monthDatesArray[index]
+        }
     }
-
+    
     let eventEndTime = addTime(0, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: seriesDurationMinute, fromDate: eventStartTime)
     
     return [eventStartTime, eventEndTime]
@@ -709,6 +729,7 @@ func createAllAnnualStartingDatesFromExistingDate(availableSeriesStartDateString
             }
             
             let wholeMonth = datesWithDaynameInSelectedDateMonth(date, dayname: daynameFromInteger(freqValue[1]))
+        
             
             if (freqValue[0] > 0){
                 date = wholeMonth[freqValue[0] - 1]
@@ -753,12 +774,12 @@ func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateS
 
 
 
-let min = stringToDate("2016-12-30 20:00")
-let max = stringToDate("2016-12-30 23:59")
+let min = stringToDate("2016-11-30 20:00")
+let max = stringToDate("2016-11-30 23:59")
 isWeekly(min, selectedMaximum: max, seriesStartDate: "2016-04-22", eventStartTime: "20:00", seriesDurationMinute: 45)
 isBiweekly(min, selectedMaximum: max, seriesStartDate: "2016-04-29", eventStartTime: "20:00", seriesDurationMinute: 45)
 isWeeklyOn(min, selectedMaximum: max, seriesStartDate: "2016-04-26", eventStartTime: "22:00", seriesDurationMinute: 45, frequencyValueString: "[tuesday]")
-isMonthly(min, selectedMaximum: max, seriesStartDateString: "2016-04-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[last friday]")
+isMonthly(min, selectedMaximum: max, seriesStartDateString: "2016-04-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[fifth friday]")
 isAnnual(min, selectedMaximum: max, seriesStartDateString: "2013-11-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[last friday in november]")
 
 
@@ -795,66 +816,3 @@ func frequencyClassifier(selectedMin: NSDate, selectedMax: NSDate, seriesStartDa
 
 
 frequencyClassifier(min, selectedMax: max, seriesStartDate: "2013-11-29", eventStartTime: "22:00", durationMinute: 120, frequency: "quarterly", frequencyValueString: "[last friday in march, last friday in june, last friday in september, last friday in december]")
-
-//func filterSeries(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDate: String, frequency: String, frequencyValueString: String) -> Bool {
-//    
-//    var frequencyValue = Array<String>()
-//    
-//    if (frequencyValueString != "") {
-//        frequencyValue = parseFrequencyValue(frequencyValueString)
-//    }
-//    
-//    var evaluation = false
-//    
-//    switch frequency.lowercaseString{
-//    case "weekly":
-//        evaluation = isWeekly(selected, series: seriesStartDate)
-//    case "biweekly":
-//        evaluation = isBiweekly(selected, series: seriesStartDate)
-//    case "weeklyon":
-//        for item in frequencyValue {
-//            let test = isWeeklyOn(item, selected: selected)
-//            if (test){
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "monthly":
-//        for item in frequencyValue {
-//            let test = isMonthlyOn(item, selected: selected)
-//            if (test){
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "annual":
-//        for item in frequencyValue {
-//            let test = isAnnualOn(item, selected: selected)
-//            if (test) {
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "semiannual":
-//        for item in frequencyValue {
-//            let test = isAnnualOn(item, selected: selected)
-//            if (test) {
-//                evaluation = true
-//                break
-//            }
-//        }
-//    case "quarterly":
-//        for item in frequencyValue {
-//            let test = isAnnualOn(item, selected: selected)
-//            if (test) {
-//                evaluation = true
-//                break
-//            }
-//        }
-//    default:
-//        print ("error")
-//    }
-//    
-//    return evaluation
-//    
-//}
