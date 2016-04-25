@@ -599,10 +599,26 @@ func createAllMonthlyStartingDatesFromExistingDate(availableSeriesStartDateStrin
         } else if freqValue[0] < 0 && -1 * freqValue[0] == dayOfWhichWeekOfMonth(availableSeriesStartDateString, fromMonthStart: false) && components.weekday == freqValue[1] {
             datesAndValues.append([availableSeriesStartDate, freqValue])
         } else {
-            let wholeMonth = datesWithDaynameInSelectedDateMonth(availableSeriesStartDate, dayname: daynameFromInteger(freqValue[1]))
+            var wholeMonth = datesWithDaynameInSelectedDateMonth(availableSeriesStartDate, dayname: daynameFromInteger(freqValue[1]))
             var date = NSDate()
             
-            if (freqValue[0] > 0){
+            if freqValue[0] == 5 && wholeMonth.count <= 4 {
+                
+                var findFifthWeek = false
+                date = availableSeriesStartDate
+                
+                while !findFifthWeek {
+                    
+                    date = addTime(0, monthAdded: 1, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: date)
+                    wholeMonth = datesWithDaynameInSelectedDateMonth(date, dayname: daynameFromInteger(freqValue[1]))
+                    
+                    if wholeMonth.count > 4 {
+                        findFifthWeek = true
+                        date = wholeMonth[freqValue[0] - 1]
+                    }
+                }
+                
+            } else if (freqValue[0] > 0){
                 date = wholeMonth[freqValue[0] - 1]
             } else {
                 let i = wholeMonth.count
@@ -653,9 +669,11 @@ func createAnnualEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDat
     
     while !eventStartAfterWindowEnd {
         eventStartTime = addTime(1, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
-        let newDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+        var newDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
         
-        if frequencyValue[0] > 0 {
+        if frequencyValue[0] == 5 && newDatesArray.count <= 4 {
+            eventStartTime = newDatesArray[3]
+        } else if frequencyValue[0] > 0 {
             eventStartTime = newDatesArray[frequencyValue[0]-1]
         } else {
             let index = newDatesArray.count - 1
@@ -668,9 +686,24 @@ func createAnnualEventFromSeries(selectedMinimum: NSDate, selectedMaximum: NSDat
     }
     
     eventStartTime = addTime(-1, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
-    let monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+    var monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
     
-    if frequencyValue[0] > 0 {
+    if  frequencyValue[0] == 5 && monthDatesArray.count == 4 {
+        
+        var fifthWeekFound = false
+        
+        while  !fifthWeekFound {
+        
+            eventStartTime = addTime(-1, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: eventStartTime)
+            monthDatesArray = datesWithDaynameInSelectedDateMonth(eventStartTime, dayname: dayname)
+            
+            if monthDatesArray.count > 4 {
+                fifthWeekFound = true
+                eventStartTime = monthDatesArray[frequencyValue[0]-1]
+            }
+        }
+        
+    } else if frequencyValue[0] > 0 {
         eventStartTime = monthDatesArray[frequencyValue[0]-1]
     } else {
         let index = monthDatesArray.count - 1
@@ -728,10 +761,23 @@ func createAllAnnualStartingDatesFromExistingDate(availableSeriesStartDateString
                 date = stringToDate(String(year+1) + "-" + monthString + "-" + dayString + " " + eventStartTimeString)
             }
             
-            let wholeMonth = datesWithDaynameInSelectedDateMonth(date, dayname: daynameFromInteger(freqValue[1]))
-        
+            var wholeMonth = datesWithDaynameInSelectedDateMonth(date, dayname: daynameFromInteger(freqValue[1]))
             
-            if (freqValue[0] > 0){
+            if freqValue[0] == 5 && wholeMonth.count <= 4 {
+                var fifthWeekFound = false
+                
+                while !fifthWeekFound {
+                    
+                    date = addTime(1, monthAdded: 0, weekAdded: 0, dayAdded: 0, minuteAdded: 0, fromDate: date)
+                    wholeMonth = datesWithDaynameInSelectedDateMonth(date, dayname: daynameFromInteger(freqValue[1]))
+                    
+                    if wholeMonth.count > 4 {
+                        fifthWeekFound = true
+                    }
+                    
+                }
+                
+            } else if (freqValue[0] > 0){
                 date = wholeMonth[freqValue[0] - 1]
             } else {
                 let i = wholeMonth.count
@@ -774,13 +820,13 @@ func isAnnual(selectedMinimum: NSDate, selectedMaximum: NSDate, seriesStartDateS
 
 
 
-let min = stringToDate("2016-11-30 20:00")
-let max = stringToDate("2016-11-30 23:59")
+let min = stringToDate("2016-12-30 20:00")
+let max = stringToDate("2016-12-30 23:59")
 isWeekly(min, selectedMaximum: max, seriesStartDate: "2016-04-22", eventStartTime: "20:00", seriesDurationMinute: 45)
 isBiweekly(min, selectedMaximum: max, seriesStartDate: "2016-04-29", eventStartTime: "20:00", seriesDurationMinute: 45)
 isWeeklyOn(min, selectedMaximum: max, seriesStartDate: "2016-04-26", eventStartTime: "22:00", seriesDurationMinute: 45, frequencyValueString: "[tuesday]")
-isMonthly(min, selectedMaximum: max, seriesStartDateString: "2016-04-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[fifth friday]")
-isAnnual(min, selectedMaximum: max, seriesStartDateString: "2013-11-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[last friday in november]")
+isMonthly(min, selectedMaximum: max, seriesStartDateString: "2016-04-29", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[fifth friday, fifth saturday]")
+isAnnual(min, selectedMaximum: max, seriesStartDateString: "2012-03-30", eventStartTimeString: "22:00", seriesDurationMinute: 120, frequencyValueString: "[fifth friday in march, fifth friday in december]")
 
 
 
